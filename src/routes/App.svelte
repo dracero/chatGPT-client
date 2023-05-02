@@ -1,32 +1,48 @@
 <script>
-    let question = '';
-    let answer = '';
-  
-    async function handleSubmit() {
-      const response = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify([question])
+  let prompt = "";
+  let generatedText = "";
+  let error = "";
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    fetch(`http://localhost:8000/generate?prompt=${encodeURIComponent(prompt)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        generatedText = data.generated_text;
+        error = "";
+      })
+      .catch((err) => {
+        generatedText = "";
+        error = err.message;
       });
-  
-      const data = await response.json();
-      answer = data.response;
-    }
-  </script>
-  
-  <main>
-    <h1>Chatbot con GPT-3 y Svelte</h1>
-    <form on:submit|preventDefault={handleSubmit}>
-      <label>
-        Ingresa tu pregunta:
-        <input type="text" bind:value={question} />
-      </label>
-      <button type="submit">Enviar</button>
-    </form>
-    {#if answer}
-      <p>Respuesta: {answer}</p>
-    {/if}
-  </main>
-  
+  }
+</script>
+
+<main>
+  <form on:submit={handleSubmit}>
+    <label>
+      Prompt:
+      <input type="text" bind:value={prompt} />
+    </label>
+    <button type="submit">Generate</button>
+  </form>
+
+  {#if generatedText}
+  <textarea>{generatedText}</textarea>
+  {:else if error}
+  <p>{error}</p>
+  {/if}
+</main>
+
+<style>
+  textarea {
+    width: 100%;
+    height: 200px;
+  }
+</style>
